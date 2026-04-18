@@ -1,9 +1,8 @@
 api:
-  # DO NOT put your real key here — this file is committed to git.
-  # Set the environment variable LLM_API_KEY instead:
-  #   export LLM_API_KEY="sk-..."
-  # or create a .env file (see .env.example).
-  api_key: ""
+  # Copy this file to api_config.yaml (already in .gitignore via .env / local overrides).
+  # Set your real key via the LLM_API_KEY environment variable (preferred),
+  # OR fill it in here — but NEVER commit the real key to git.
+  api_key: ""          # overridden by $LLM_API_KEY env var at runtime
   base_url: "https://api.xeduapi.com"
   model: "gpt-4.1"
   temperature: 0
@@ -13,7 +12,7 @@ api:
 # ── V3 experiment settings ──────────────────────────────────────────────────
 small_model:
   model_name: "microsoft/deberta-v3-base"
-  max_length: 512          # increased from 256 to handle BasePack + LLM_Aug
+  max_length: 512
   batch_size: 16
   num_epochs: 5
   learning_rate: 2.0e-5
@@ -25,13 +24,13 @@ experiments:
     train_input: "data/processed/basepack_train.jsonl"
     val_input:   "data/processed/basepack_val.jsonl"
     test_input:  "data/processed/basepack_test.jsonl"
-    input_field: "basepack_text"
+    input_mode:  "base"
   exp2:
     output_dir: "outputs/exp2_llm_pre"
     train_input: "data/processed/augmented_train.jsonl"
     val_input:   "data/processed/augmented_val.jsonl"
     test_input:  "data/processed/augmented_test.jsonl"
-    input_field: "augmented_text"
+    input_mode:  "base_plus_llm_aug"
   exp3:
     output_dir: "outputs/exp3_llm_post"
     basepack_test: "data/processed/basepack_test.jsonl"

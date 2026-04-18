@@ -1,13 +1,24 @@
+# ── Large / generated data ───────────────────────────────────────────────────
 data/
 PHEME/
 outputs/
+
+# ── Secrets — NEVER commit these ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# Local API config with real keys (use api_config.yaml.example as template)
+configs/api_config.local.yaml
+
+# ── macOS / IDE ───────────────────────────────────────────────────────────────
 .DS_Store
 .cursorignore
 .claude/
 .cursor/
-.cursorignore
-.claude/
-.cursor/
-.cursorignore
-.claude/
-.cursor/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/

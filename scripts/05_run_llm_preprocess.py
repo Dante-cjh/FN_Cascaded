@@ -33,8 +33,17 @@ import time
 import argparse
 from pathlib import Path
 
+import os
+
 import yaml
 from openai import OpenAI
+
+# Optional: load .env file if python-dotenv is installed
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 
 # --------------------------------------------------------------------------- #
@@ -43,7 +52,18 @@ from openai import OpenAI
 
 def load_config(config_path: str = "configs/api_config.yaml") -> dict:
     with open(config_path) as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    # Environment variable takes priority over whatever is written in the yaml.
+    env_key = os.environ.get("LLM_API_KEY", "").strip()
+    if env_key:
+        cfg["api"]["api_key"] = env_key
+    if not cfg["api"].get("api_key"):
+        raise EnvironmentError(
+            "LLM API key is not set.\n"
+            "  Option 1: export LLM_API_KEY='sk-...'\n"
+            "  Option 2: create a .env file (see .env.example)"
+        )
+    return cfg
 
 
 def load_prompt_template(path: str = "prompts/llm_preprocess.txt") -> str:
