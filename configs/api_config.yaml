@@ -1,11 +1,10 @@
 api:
   # DO NOT put your real key here — this file is committed to git.
-  # Set the environment variable LLM_API_KEY instead:
-  #   export LLM_API_KEY="sk-..."
+  # Set the environment variable DASHSCOPE_API_KEY instead:
+  #   export DASHSCOPE_API_KEY="sk-..."
   # or create a .env file (see .env.example).
   api_key: ""
-  base_url: "https://api.xeduapi.com"
-  model: "gpt-4.1"
+  model: "qwen-plus"   # options: qwen-turbo / qwen-plus / qwen-max
   temperature: 0
   max_retries: 3
   retry_delay: 5

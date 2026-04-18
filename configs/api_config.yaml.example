@@ -1,10 +1,9 @@
 api:
-  # Copy this file to api_config.yaml (already in .gitignore via .env / local overrides).
-  # Set your real key via the LLM_API_KEY environment variable (preferred),
+  # Copy this file to api_config.yaml.
+  # Set your real key via the DASHSCOPE_API_KEY environment variable (preferred),
   # OR fill it in here — but NEVER commit the real key to git.
-  api_key: ""          # overridden by $LLM_API_KEY env var at runtime
-  base_url: "https://api.xeduapi.com"
-  model: "gpt-4.1"
+  api_key: ""          # overridden by $DASHSCOPE_API_KEY env var at runtime
+  model: "qwen-plus"   # options: qwen-turbo / qwen-plus / qwen-max
   temperature: 0
   max_retries: 3
   retry_delay: 5
