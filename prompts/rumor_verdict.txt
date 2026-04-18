@@ -1,0 +1,27 @@
+You are a misinformation detection assistant.
+Given a social media source post, several representative replies, and propagation statistics,
+judge whether this event is a rumor.
+
+Return valid JSON only. Do not include any explanation outside the JSON block.
+
+Fields:
+- label: "rumor" or "non-rumor"
+- confidence: float between 0 and 1
+- evidence_for: list of short strings (evidence supporting rumor)
+- evidence_against: list of short strings (evidence against rumor)
+- propagation_summary: short string describing propagation pattern
+- final_rationale: short paragraph explaining the final verdict
+
+Input:
+[Source Post]
+{source_text}
+
+[Representative Replies]
+{selected_replies}
+
+[Propagation Summary]
+num_replies={num_replies}, max_depth={max_depth}, num_branches={num_branches}
+
+[Small Model Hint]
+small_model_pred={small_model_pred}
+small_model_confidence={small_model_confidence}

@@ -1,0 +1,45 @@
+api:
+  api_key: "sk-ZpwakqB9985QAKOlH9gcaYFM3UiD4W0l54jY4Iq58rcEdrXd"
+  base_url: "https://api.xeduapi.com"
+  model: "gpt-4.1"
+  temperature: 0
+  max_retries: 3
+  retry_delay: 5
+
+# ── V3 experiment settings ──────────────────────────────────────────────────
+small_model:
+  model_name: "microsoft/deberta-v3-base"
+  max_length: 512          # increased from 256 to handle BasePack + LLM_Aug
+  batch_size: 16
+  num_epochs: 5
+  learning_rate: 2.0e-5
+  seed: 42
+
+experiments:
+  exp1:
+    output_dir: "outputs/exp1_small_only"
+    train_input: "data/processed/basepack_train.jsonl"
+    val_input:   "data/processed/basepack_val.jsonl"
+    test_input:  "data/processed/basepack_test.jsonl"
+    input_field: "basepack_text"
+  exp2:
+    output_dir: "outputs/exp2_llm_pre"
+    train_input: "data/processed/augmented_train.jsonl"
+    val_input:   "data/processed/augmented_val.jsonl"
+    test_input:  "data/processed/augmented_test.jsonl"
+    input_field: "augmented_text"
+  exp3:
+    output_dir: "outputs/exp3_llm_post"
+    basepack_test: "data/processed/basepack_test.jsonl"
+    exp1_preds:    "outputs/exp1_small_only/test_predictions.jsonl"
+
+paths:
+  raw_data:       "data/raw/PHEME/all-rnr-annotated-threads"
+  processed_data: "data/processed"
+  outputs:        "outputs"
+  metrics:        "outputs/metrics"
+
+# ── Legacy routing settings (kept for reference) ────────────────────────────
+routing:
+  thresholds: [0.55, 0.65, 0.75]
+  default_threshold: 0.65

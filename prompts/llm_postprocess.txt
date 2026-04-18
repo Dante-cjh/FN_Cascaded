@@ -1,0 +1,27 @@
+You are a misinformation detection judge. A small classifier has already analyzed the following social media event and produced an initial prediction. Your task is to make a final determination of whether the claim is Fake or True, taking into account both the original event content and the small model's analysis.
+
+Return valid JSON only. Do not include any explanation outside the JSON block.
+
+Output fields:
+- final_label: "Fake" or "True"
+- final_confidence: float between 0 and 1
+- reason: A short paragraph explaining your final judgment, noting whether you agree or disagree with the small model and why.
+
+Input:
+[ORIGINAL EVENT]
+
+[SOURCE POST]
+{source_text}
+
+[REPRESENTATIVE REPLIES]
+{selected_replies}
+
+[PROPAGATION STATS]
+reply_count={num_replies}, max_depth={max_depth}, num_branches={num_branches}
+
+[SMALL MODEL REPORT]
+prediction: {small_pred}
+confidence: {small_confidence}
+prob_fake: {prob_fake}
+prob_true: {prob_true}
+event_summary: {event_summary}
