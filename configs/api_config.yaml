@@ -4,7 +4,8 @@ api:
   #   export DASHSCOPE_API_KEY="sk-..."
   # or create a .env file (see .env.example).
   api_key: ""
-  model: "qwen-plus"   # options: qwen-turbo / qwen-plus / qwen-max
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  model: "qwen-turbo"   # options: qwen-turbo / qwen-plus / qwen-max / qwen3.6-flash
   temperature: 0
   max_retries: 3
   retry_delay: 5

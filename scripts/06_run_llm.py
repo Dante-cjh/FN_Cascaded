@@ -51,13 +51,17 @@ except ImportError:
 def load_config(config_path: str = "configs/api_config.yaml") -> dict:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
-    env_key = os.environ.get("LLM_API_KEY", "").strip()
+    # 环境变量优先级高于 yaml 配置，同时兼容 DASHSCOPE_API_KEY 和 LLM_API_KEY
+    env_key = (
+        os.environ.get("DASHSCOPE_API_KEY", "").strip()
+        or os.environ.get("LLM_API_KEY", "").strip()
+    )
     if env_key:
         cfg["api"]["api_key"] = env_key
     if not cfg["api"].get("api_key"):
         raise EnvironmentError(
             "LLM API key is not set.\n"
-            "  Option 1: export LLM_API_KEY='sk-...'\n"
+            "  Option 1: export DASHSCOPE_API_KEY='sk-...'\n"
             "  Option 2: create a .env file (see .env.example)"
         )
     return cfg
@@ -143,7 +147,7 @@ def run_llm(args):
 
     client = OpenAI(
         api_key=api_cfg["api_key"],
-        base_url=api_cfg["base_url"],
+        base_url=api_cfg.get("base_url"),
     )
     model = api_cfg["model"]
     temperature = api_cfg.get("temperature", 0)
