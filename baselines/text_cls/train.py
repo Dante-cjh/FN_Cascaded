@@ -26,9 +26,11 @@ Usage (Exp-2):
 """
 
 import json
+import random
 import argparse
 from pathlib import Path
 
+import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
@@ -38,6 +40,16 @@ from transformers import (
 )
 from torch.optim import AdamW
 from sklearn.metrics import accuracy_score, f1_score, classification_report
+
+
+def set_seed(seed: int):
+    """Fix all random sources for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 # --------------------------------------------------------------------------- #
@@ -127,6 +139,9 @@ def evaluate(model, loader, device, label_names=None):
 
 
 def train(args):
+    set_seed(args.seed)
+    print(f"Random seed: {args.seed}")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
@@ -148,7 +163,10 @@ def train(args):
     train_dataset = RumorDataset(train_events, tokenizer, args.max_length, input_mode)
     val_dataset   = RumorDataset(val_events,   tokenizer, args.max_length, input_mode)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    g = torch.Generator()
+    g.manual_seed(args.seed)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
+                              generator=g)
     val_loader   = DataLoader(val_dataset,   batch_size=args.batch_size)
 
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
@@ -199,6 +217,7 @@ def train(args):
         "best_val_macro_f1": best_f1,
         "input_mode": input_mode,
         "label_names": label_names,
+        "seed": args.seed,
     }
     with open(output_dir / "val_metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
@@ -227,6 +246,10 @@ def main():
     parser.add_argument(
         "--label_names", nargs=2, default=["True", "Fake"],
         help="Display names for label 0 and label 1",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Random seed for reproducibility (default: 42)",
     )
     args = parser.parse_args()
     train(args)
