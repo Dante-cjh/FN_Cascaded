@@ -1,10 +1,11 @@
 """
 08_eval_all.py
-Unified evaluation for all three controlled variable experiments.
+Unified evaluation for all controlled variable experiments.
 
-Exp-1: Small-Only          (outputs/exp1_small_only/test_predictions.jsonl)
-Exp-2: LLM-Pre + Small     (outputs/exp2_llm_pre/test_predictions.jsonl)
-Exp-3: Small + LLM-Post    (outputs/exp3_llm_post/test_predictions.jsonl)
+Exp-1 : Small-Only              (outputs/exp1_small_only/test_predictions.jsonl)
+Exp-2 : LLM-Pre + Small         (outputs/exp2_llm_pre/test_predictions.jsonl)
+Exp-3 : Small + LLM-Post        (outputs/exp3_llm_post/test_predictions.jsonl)
+Exp-3b: Small + LLM-Post(Think) (outputs/exp3_llm_post/test_predictions_thinking.jsonl)
 
 Outputs (in outputs/metrics/):
   main_results.txt / .md      - Table 1: accuracy / macro-F1 / F1-Fake / F1-True
@@ -112,35 +113,36 @@ def md_sep(*aligns) -> str:
 #  Table 1: Main results
 # --------------------------------------------------------------------------- #
 
-def print_main_table(r1, r2, r3, out_dir: Path):
-    results = [r1, r2, r3]
+def print_main_table(r1, r2, r3, r3b, out_dir: Path):
+    results = [r1, r2, r3, r3b]
     meta = [
-        ("Exp-1 Small-Only",     "Yes", "None"),
-        ("Exp-2 LLM-Pre+Small",  "Yes", "Pre"),
-        ("Exp-3 Small+LLM-Post", "Yes", "Post"),
+        ("Exp-1  Small-Only",         "Yes", "None"),
+        ("Exp-2  LLM-Pre+Small",      "Yes", "Pre"),
+        ("Exp-3  Small+LLM-Post",     "Yes", "Post"),
+        ("Exp-3b Small+LLM-Post(Think)", "Yes", "Post+Think"),
     ]
 
     # ── plain text ─────────────────────────────────────────────────────────
     lines = []
-    lines.append("=" * 86)
+    lines.append("=" * 96)
     lines.append("Table 1: Main Results (Fake/True Binary, PHEME)")
-    lines.append("=" * 86)
-    hdr = (f"{'Method':<26} {'Small Fixed':>11} {'LLM Pos':>8} "
+    lines.append("=" * 96)
+    hdr = (f"{'Method':<30} {'Small Fixed':>11} {'LLM Pos':>11} "
            f"{'Accuracy':>9} {'Macro-F1':>9} {'F1-Fake':>8} {'F1-True':>8}")
     lines.append(hdr)
-    lines.append("-" * 86)
+    lines.append("-" * 96)
     for r, (name, fixed, pos) in zip(results, meta):
         if r is None:
-            lines.append(f"{name:<26} {fixed:>11} {pos:>8} "
+            lines.append(f"{name:<30} {fixed:>11} {pos:>11} "
                          f"{'N/A':>9} {'N/A':>9} {'N/A':>8} {'N/A':>8}")
         else:
             m = r["metrics"]
-            lines.append(f"{name:<26} {fixed:>11} {pos:>8} "
+            lines.append(f"{name:<30} {fixed:>11} {pos:>11} "
                          f"{m['accuracy']:>9.4f} {m['macro_f1']:>9.4f} "
                          f"{m['f1_fake']:>8.4f} {m['f1_true']:>8.4f}")
-    lines.append("=" * 86)
+    lines.append("=" * 96)
 
-    # Gain rows
+    # 增量对比行（均相对于 Exp-1 基线）
     def gain_row(label, rx, ry):
         if rx is None or ry is None:
             return
@@ -149,8 +151,10 @@ def print_main_table(r1, r2, r3, out_dir: Path):
             g = ry["metrics"][k] - rx["metrics"][k]
             lines.append(f"  {k:12}: {g:+.4f}")
 
-    gain_row("Gain: Exp-2 − Exp-1", r1, r2)
-    gain_row("Gain: Exp-3 − Exp-1", r1, r3)
+    gain_row("Gain: Exp-2  − Exp-1", r1, r2)
+    gain_row("Gain: Exp-3  − Exp-1", r1, r3)
+    gain_row("Gain: Exp-3b − Exp-1", r1, r3b)
+    gain_row("Gain: Exp-3b − Exp-3 (Thinking effect)", r3, r3b)
 
     txt = "\n".join(lines)
     print("\n" + txt)
@@ -185,8 +189,10 @@ def print_main_table(r1, r2, r3, out_dir: Path):
             md.append(md_row(k, f"{g:+.4f}"))
         md.append("")
 
-    md_gain("Gain: Exp-2 − Exp-1", r1, r2)
-    md_gain("Gain: Exp-3 − Exp-1", r1, r3)
+    md_gain("Gain: Exp-2  − Exp-1", r1, r2)
+    md_gain("Gain: Exp-3  − Exp-1", r1, r3)
+    md_gain("Gain: Exp-3b − Exp-1", r1, r3b)
+    md_gain("Gain: Exp-3b − Exp-3 (Thinking effect)", r3, r3b)
 
     _write(out_dir / "main_results.md", "\n".join(md))
     print(f"Saved -> {out_dir / 'main_results.txt'}  and  main_results.md")
@@ -225,23 +231,24 @@ def _llm_stats_post(pred_path: Path) -> dict:
     }
 
 
-def print_llm_stats_table(stats2, stats3, out_dir: Path):
+def print_llm_stats_table(stats2, stats3, stats3b, out_dir: Path):
     rows = [
-        ("Exp-2 LLM-Pre+Small",  stats2),
-        ("Exp-3 Small+LLM-Post", stats3),
+        ("Exp-2  LLM-Pre+Small",         stats2),
+        ("Exp-3  Small+LLM-Post",        stats3),
+        ("Exp-3b Small+LLM-Post(Think)", stats3b),
     ]
 
     # plain text
-    lines = ["=" * 68, "Table 2: LLM Cost & Reliability", "=" * 68,
-             f"{'Method':<24} {'Avg Tokens':>12} {'Total Tokens':>14} {'Parse Succ':>12}",
-             "-" * 68]
+    lines = ["=" * 72, "Table 2: LLM Cost & Reliability", "=" * 72,
+             f"{'Method':<30} {'Avg Tokens':>12} {'Total Tokens':>14} {'Parse Succ':>12}",
+             "-" * 72]
     for name, st in rows:
         if st:
-            lines.append(f"{name:<24} {st['avg_tokens']:>12.0f} "
+            lines.append(f"{name:<30} {st['avg_tokens']:>12.0f} "
                          f"{st['total_tokens']:>14} {st['parse_rate']:>12.1%}")
         else:
-            lines.append(f"{name:<24} {'N/A':>12} {'N/A':>14} {'N/A':>12}")
-    lines.append("=" * 68)
+            lines.append(f"{name:<30} {'N/A':>12} {'N/A':>14} {'N/A':>12}")
+    lines.append("=" * 72)
     txt = "\n".join(lines)
     print("\n" + txt)
     _write(out_dir / "llm_stats.txt", txt)
@@ -298,44 +305,80 @@ def compute_correction_analysis(exp1_path: Path, exp3_path: Path) -> dict | None
     }
 
 
-def print_correction_table(analysis, out_dir: Path):
-    # plain text
-    lines = ["=" * 62,
-             "Table 3: Exp-3 Post-Processing Correction Analysis",
-             "=" * 62]
-    if analysis:
+def print_correction_table(analysis3, analysis3b, out_dir: Path):
+    """同时打印 Exp-3 和 Exp-3b 的 correction analysis，并对比 thinking 效果。"""
+
+    def _section(title, analysis):
+        lines = [title]
+        if analysis:
+            lines += [
+                f"  Total test events : {analysis['total']}",
+                f"  Flip rate         : {analysis['flip_rate']:.1%}  ({analysis['flipped']})",
+                f"  Correction rate   : {analysis['correction_rate']:.1%}  ({analysis['corrected']})",
+                f"    (Exp-1 wrong → correct)",
+                f"  Damage rate       : {analysis['damage_rate']:.1%}  ({analysis['damaged']})",
+                f"    (Exp-1 correct → wrong)",
+                f"  Net gain          : {analysis['net_gain']:+.1%}",
+            ]
+        else:
+            lines.append("  N/A — predictions not found.")
+        return lines
+
+    lines = ["=" * 68,
+             "Table 3: Post-Processing Correction Analysis (vs Exp-1)",
+             "=" * 68]
+    lines += _section("Exp-3  Small+LLM-Post:", analysis3)
+    lines.append("")
+    lines += _section("Exp-3b Small+LLM-Post(Think):", analysis3b)
+
+    # Thinking 带来的额外增益
+    if analysis3 and analysis3b:
         lines += [
-            f"Total test events : {analysis['total']}",
-            f"Flip rate         : {analysis['flip_rate']:.1%}  ({analysis['flipped']})",
-            f"Correction rate   : {analysis['correction_rate']:.1%}  ({analysis['corrected']})",
-            f"  (Exp-1 wrong → Exp-3 correct)",
-            f"Damage rate       : {analysis['damage_rate']:.1%}  ({analysis['damaged']})",
-            f"  (Exp-1 correct → Exp-3 wrong)",
-            f"Net gain          : {analysis['net_gain']:+.1%}",
+            "",
+            "Thinking effect (Exp-3b − Exp-3):",
+            f"  Net gain delta : {analysis3b['net_gain'] - analysis3['net_gain']:+.1%}",
+            f"  Correction Δ   : {analysis3b['correction_rate'] - analysis3['correction_rate']:+.1%}",
+            f"  Damage Δ       : {analysis3b['damage_rate']     - analysis3['damage_rate']:+.1%}",
         ]
-    else:
-        lines.append("N/A — Exp-1 or Exp-3 predictions not found.")
-    lines.append("=" * 62)
+    lines.append("=" * 68)
+
     txt = "\n".join(lines)
     print("\n" + txt)
     _write(out_dir / "correction_analysis.txt", txt)
 
     # markdown
-    md = ["## Table 3: Correction Analysis (Exp-3 vs Exp-1)\n"]
-    if analysis:
+    def _md_block(label, analysis):
+        rows = []
+        if analysis:
+            rows += [
+                md_row("Metric", "Rate", "Count"),
+                md_sep("l", "r", "r"),
+                md_row("Flip rate",       f"{analysis['flip_rate']:.1%}",       analysis["flipped"]),
+                md_row("Correction rate", f"{analysis['correction_rate']:.1%}", analysis["corrected"]),
+                md_row("Damage rate",     f"{analysis['damage_rate']:.1%}",     analysis["damaged"]),
+                md_row("**Net gain**",    f"**{analysis['net_gain']:+.1%}**",   ""),
+                "",
+                "> *Correction*: Exp-1 wrong → correct  ",
+                "> *Damage*: Exp-1 correct → wrong",
+            ]
+        else:
+            rows.append("N/A — predictions not found.")
+        return [f"\n### {label}\n"] + rows
+
+    md = ["## Table 3: Correction Analysis (vs Exp-1)\n"]
+    md += _md_block("Exp-3 Small+LLM-Post", analysis3)
+    md += _md_block("Exp-3b Small+LLM-Post (Thinking)", analysis3b)
+
+    if analysis3 and analysis3b:
         md += [
-            md_row("Metric", "Rate", "Count"),
-            md_sep("l", "r", "r"),
-            md_row("Flip rate",       f"{analysis['flip_rate']:.1%}",       analysis["flipped"]),
-            md_row("Correction rate", f"{analysis['correction_rate']:.1%}", analysis["corrected"]),
-            md_row("Damage rate",     f"{analysis['damage_rate']:.1%}",     analysis["damaged"]),
-            md_row("**Net gain**",    f"**{analysis['net_gain']:+.1%}**",   ""),
-            "",
-            "> *Correction*: Exp-1 wrong → Exp-3 correct  ",
-            "> *Damage*: Exp-1 correct → Exp-3 wrong",
+            "\n### Thinking Effect (Exp-3b − Exp-3)\n",
+            md_row("Metric", "Δ"),
+            md_sep("l", "r"),
+            md_row("Net gain",       f"{analysis3b['net_gain']       - analysis3['net_gain']:+.1%}"),
+            md_row("Correction rate",f"{analysis3b['correction_rate']- analysis3['correction_rate']:+.1%}"),
+            md_row("Damage rate",    f"{analysis3b['damage_rate']    - analysis3['damage_rate']:+.1%}"),
         ]
-    else:
-        md.append("N/A — predictions not found.")
+
     _write(out_dir / "correction_analysis.md", "\n".join(md))
     print(f"Saved -> {out_dir / 'correction_analysis.txt'}  and  correction_analysis.md")
 
@@ -355,41 +398,49 @@ def _write(path: Path, content: str):
 # --------------------------------------------------------------------------- #
 
 def main():
-    parser = argparse.ArgumentParser(description="Unified evaluation for all 3 experiments")
-    parser.add_argument("--exp1_preds",   default="outputs/exp1_small_only/test_predictions.jsonl")
-    parser.add_argument("--exp2_preds",   default="outputs/exp2_llm_pre/test_predictions.jsonl")
-    parser.add_argument("--exp3_preds",   default="outputs/exp3_llm_post/test_predictions.jsonl")
-    parser.add_argument("--exp2_aug_dir", default="outputs/exp2_llm_pre",
+    parser = argparse.ArgumentParser(description="Unified evaluation for all experiments")
+    parser.add_argument("--exp1_preds",    default="outputs/exp1_small_only/test_predictions.jsonl")
+    parser.add_argument("--exp2_preds",    default="outputs/exp2_llm_pre/test_predictions.jsonl")
+    parser.add_argument("--exp3_preds",    default="outputs/exp3_llm_post/test_predictions.jsonl")
+    parser.add_argument("--exp3b_preds",   default="outputs/exp3_llm_post/test_predictions_thinking.jsonl",
+                        help="Exp-3b: LLM-Post with enable_thinking=True")
+    parser.add_argument("--exp2_aug_dir",  default="outputs/exp2_llm_pre",
                         help="Directory with llm_aug_{split}.jsonl for Exp-2 token stats")
-    parser.add_argument("--metrics_dir",  default="outputs/metrics")
+    parser.add_argument("--metrics_dir",   default="outputs/metrics")
     args = parser.parse_args()
 
     out_dir = Path(args.metrics_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Table 1: main results ──────────────────────────────────────────────
-    r1 = eval_exp("Exp-1 Small-Only",     Path(args.exp1_preds), pred_field="pred")
-    r2 = eval_exp("Exp-2 LLM-Pre+Small",  Path(args.exp2_preds), pred_field="pred")
-    r3 = eval_exp("Exp-3 Small+LLM-Post", Path(args.exp3_preds), pred_field="final_pred")
-    print_main_table(r1, r2, r3, out_dir)
+    r1  = eval_exp("Exp-1  Small-Only",            Path(args.exp1_preds),  pred_field="pred")
+    r2  = eval_exp("Exp-2  LLM-Pre+Small",         Path(args.exp2_preds),  pred_field="pred")
+    r3  = eval_exp("Exp-3  Small+LLM-Post",        Path(args.exp3_preds),  pred_field="final_pred")
+    r3b = eval_exp("Exp-3b Small+LLM-Post(Think)", Path(args.exp3b_preds), pred_field="final_pred")
+    print_main_table(r1, r2, r3, r3b, out_dir)
 
     # ── Table 2: LLM stats ─────────────────────────────────────────────────
-    stats2 = _llm_stats_pre(Path(args.exp2_aug_dir)) \
-             if Path(args.exp2_aug_dir).exists() else None
-    stats3 = _llm_stats_post(Path(args.exp3_preds)) \
-             if Path(args.exp3_preds).exists() else None
-    print_llm_stats_table(stats2, stats3, out_dir)
+    stats2  = _llm_stats_pre(Path(args.exp2_aug_dir)) \
+              if Path(args.exp2_aug_dir).exists() else None
+    stats3  = _llm_stats_post(Path(args.exp3_preds)) \
+              if Path(args.exp3_preds).exists() else None
+    stats3b = _llm_stats_post(Path(args.exp3b_preds)) \
+              if Path(args.exp3b_preds).exists() else None
+    print_llm_stats_table(stats2, stats3, stats3b, out_dir)
 
     # ── Table 3: correction analysis ──────────────────────────────────────
-    analysis = compute_correction_analysis(Path(args.exp1_preds), Path(args.exp3_preds))
-    print_correction_table(analysis, out_dir)
+    analysis3  = compute_correction_analysis(Path(args.exp1_preds), Path(args.exp3_preds))
+    analysis3b = compute_correction_analysis(Path(args.exp1_preds), Path(args.exp3b_preds))
+    print_correction_table(analysis3, analysis3b, out_dir)
 
     # ── Machine-readable dump ─────────────────────────────────────────────
     all_results = {
-        "exp1": r1, "exp2": r2, "exp3": r3,
-        "llm_stats_exp2": stats2,
-        "llm_stats_exp3": stats3,
-        "correction_analysis": analysis,
+        "exp1": r1, "exp2": r2, "exp3": r3, "exp3b": r3b,
+        "llm_stats_exp2":  stats2,
+        "llm_stats_exp3":  stats3,
+        "llm_stats_exp3b": stats3b,
+        "correction_analysis_exp3":  analysis3,
+        "correction_analysis_exp3b": analysis3b,
     }
     with open(out_dir / "all_results.json", "w") as f:
         json.dump(all_results, f, indent=2)
