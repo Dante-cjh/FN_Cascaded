@@ -15,6 +15,7 @@ BATCH_SIZE=${BATCH_SIZE:-16}
 EPOCHS=${EPOCHS:-10}
 LR=${LR:-2e-5}
 MAX_LEN=${MAX_LEN:-512}
+SEED=${SEED:-42}
 DATA_DIR="data/processed/exp2_ablation"
 OUTPUT_DIR="outputs/exp2_ablation/${ABL_NAME}/model"
 PRED_OUT="outputs/exp2_ablation/${ABL_NAME}/test_predictions.jsonl"
@@ -42,6 +43,7 @@ python baselines/text_cls/train.py \
     --batch_size  "$BATCH_SIZE" \
     --num_epochs  "$EPOCHS" \
     --lr          "$LR" \
+    --seed        "$SEED" \
     --input_mode  base_plus_llm_aug \
     --label_names True Fake \
     --output_dir  "$OUTPUT_DIR"

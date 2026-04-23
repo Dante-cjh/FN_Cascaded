@@ -14,13 +14,14 @@ BATCH_SIZE=${BATCH_SIZE:-16}
 EPOCHS=${EPOCHS:-10}
 LR=${LR:-2e-5}
 MAX_LEN=${MAX_LEN:-512}
+SEED=${SEED:-42}
 OUTPUT_DIR=${OUTPUT_DIR:-"outputs/exp2_llm_pre/model"}
 
 echo "======================================"
 echo " Exp-2: LLM-Pre + Small Training"
 echo "  input_mode : base_plus_llm_aug (augmented_text)"
 echo "  model      : $MODEL_NAME"
-echo "  epochs     : $EPOCHS  lr: $LR  max_len: $MAX_LEN"
+echo "  epochs     : $EPOCHS  lr: $LR  max_len: $MAX_LEN  seed: $SEED"
 echo "  output     : $OUTPUT_DIR"
 echo "======================================"
 
@@ -40,6 +41,7 @@ python baselines/text_cls/train.py \
     --batch_size  "$BATCH_SIZE" \
     --num_epochs  "$EPOCHS" \
     --lr          "$LR" \
+    --seed        "$SEED" \
     --input_mode  base_plus_llm_aug \
     --label_names True Fake \
     --output_dir  "$OUTPUT_DIR"
